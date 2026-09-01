@@ -1,18 +1,57 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Ensure environment is strictly typed/read
-const getApiKey = () => {
+const getApiKeys = () => {
   const savedSettings = JSON.parse(localStorage.getItem('interviewSettings') || '{}');
-  const key = savedSettings.apiKey || import.meta.env.VITE_GEMINI_API_KEY;
-  if (!key) {
-    console.error("GEMINI_API_KEY is not configured.");
-    return null;
-  }
-  return key.trim();
+  const rawKey = savedSettings.apiKey || import.meta.env.VITE_GEMINI_API_KEY;
+  if (!rawKey) return [];
+  // Split by comma in case multiple keys are provided for rotation
+  return rawKey.split(',').map(k => k.trim()).filter(k => k.length > 0);
 };
 
 const getModelName = () => {
   return import.meta.env.VITE_GEMINI_MODEL || "gemini-1.5-pro";
+};
+
+// Core executor that handles automatic API Key Rotation
+const executeWithKeyRotation = async (modelName, systemPrompt, contents, generationConfig, isFirstQuestion = false) => {
+  const keys = getApiKeys();
+  if (keys.length === 0) {
+    throw new Error("GEMINI_API_KEY is not configured.");
+  }
+
+  let lastError;
+  for (let i = 0; i < keys.length; i++) {
+    try {
+      if (i > 0) console.log(`[Gemini] Retrying with API Key ${i + 1}...`);
+      
+      const genAI = new GoogleGenerativeAI(keys[i]);
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction: systemPrompt
+      });
+
+      const result = await model.generateContent({
+        contents,
+        generationConfig
+      });
+      
+      return result.response.text();
+    } catch (error) {
+      lastError = error;
+      // If we hit a 429 Rate Limit error and we have more keys available, rotate to the next key.
+      if (error.message && error.message.includes("429") && i < keys.length - 1) {
+        console.warn(`[Gemini] Key ${i + 1} hit rate limit (429). Rotating to key ${i + 2}...`);
+        continue;
+      }
+      
+      // If it's a different error or we are out of keys, break the loop and throw
+      console.error(`[Gemini] Error with Key ${i + 1}:`, error.message);
+      break; 
+    }
+  }
+  
+  throw lastError;
 };
 
 const generateScenario = (role, type) => {
@@ -27,16 +66,7 @@ const generateScenario = (role, type) => {
 
 export const generateNextQuestion = async (settings, transcript, isFirstQuestion = false) => {
   const scenario = generateScenario(settings.jobRole, settings.interviewType);
-  const apiKey = getApiKey();
   const modelName = getModelName();
-  
-  if (!apiKey) {
-    return {
-      success: false,
-      question: "The AI interviewer is temporarily unavailable (Missing API Key configuration). Please configure VITE_GEMINI_API_KEY and try again.",
-      reasoning: "Missing configuration."
-    };
-  }
 
   const systemPrompt = `You are a professional AI interviewer conducting a realistic mock interview.
 Your job is to evaluate the candidate for the selected role and scenario.
@@ -66,26 +96,15 @@ INSTRUCTIONS:
     : `Here is the interview transcript so far:\n\n${conversationContext}\n\nBased on the candidate's last answer, generate the next question.`;
 
   try {
-    console.log("[Gemini] Initializing client");
-    const genAI = new GoogleGenerativeAI(apiKey);
-    console.log(`[Gemini] Model: ${modelName}`);
-    
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-      systemInstruction: systemPrompt
-    });
-
     console.log(isFirstQuestion ? "[Gemini] Generating opening question" : "[Gemini] Generating follow-up question");
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-      generationConfig: {
-        temperature: 0.7,
-        responseMimeType: "application/json"
-      }
-    });
+    let resultText = await executeWithKeyRotation(
+      modelName, 
+      systemPrompt, 
+      [{ role: 'user', parts: [{ text: userMessage }] }],
+      { temperature: 0.7, responseMimeType: "application/json" }
+    );
 
-    let resultText = result.response.text();
     resultText = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
     const resultJson = JSON.parse(resultText);
     
@@ -109,11 +128,8 @@ INSTRUCTIONS:
 
 export const evaluateInterview = async (settings, transcript) => {
   const scenario = generateScenario(settings.jobRole, settings.interviewType);
-  const apiKey = getApiKey();
   const modelName = getModelName();
   
-  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
-
   const conversationContext = transcript.map(t => `${t.role === 'ai' ? 'Interviewer' : 'Candidate'}: ${t.text}`).join('\n');
 
   const systemPrompt = `You are an expert technical recruiter and interviewer evaluator.
@@ -147,24 +163,15 @@ INSTRUCTIONS:
 }`;
 
   try {
-    console.log("[Gemini] Initializing client for evaluation");
-    const genAI = new GoogleGenerativeAI(apiKey);
     console.log(`[Gemini] Generating evaluation using model: ${modelName}`);
 
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-      systemInstruction: systemPrompt
-    });
+    let resultText = await executeWithKeyRotation(
+      modelName, 
+      systemPrompt, 
+      [{ role: 'user', parts: [{ text: `Here is the interview transcript:\n\n${conversationContext}\n\nGenerate the final evaluation.` }] }],
+      { temperature: 0.2, responseMimeType: "application/json" }
+    );
 
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: `Here is the interview transcript:\n\n${conversationContext}\n\nGenerate the final evaluation.` }] }],
-      generationConfig: {
-        temperature: 0.2,
-        responseMimeType: "application/json"
-      }
-    });
-
-    let resultText = result.response.text();
     resultText = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
     console.log("[Gemini] Evaluation generated successfully");
     
