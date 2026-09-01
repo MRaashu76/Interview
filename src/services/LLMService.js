@@ -18,7 +18,7 @@ const getApiKeys = () => {
 };
 
 const getModelName = () => {
-  return import.meta.env.VITE_GEMINI_MODEL || "gemini-2.5-flash";
+  return import.meta.env.VITE_GEMINI_MODEL || "gemini-3.6-flash";
 };
 
 // Core executor that handles automatic API Key Rotation
