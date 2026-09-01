@@ -18,7 +18,7 @@ const getApiKeys = () => {
 };
 
 const getModelName = () => {
-  return import.meta.env.VITE_GEMINI_MODEL || "gemini-1.5-pro";
+  return import.meta.env.VITE_GEMINI_MODEL || "gemini-2.5-flash";
 };
 
 // Core executor that handles automatic API Key Rotation
@@ -133,6 +133,8 @@ INSTRUCTIONS:
         errorMsg = "API Error: Rate limit exceeded (429). Your API key has run out of quota. Please add a new API key to Vercel.";
       } else if (error.message.includes("not configured")) {
         errorMsg = "API Error: VITE_GEMINI_API_KEY is missing! Please add it to your Vercel Environment Variables and redeploy.";
+      } else {
+        errorMsg = `API Error: ${error.message}`;
       }
     }
 
