@@ -1,0 +1,133 @@
+.dashboard-container {
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  padding: 3rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.dashboard-header h1 {
+  font-size: 2.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-header .subtitle {
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+}
+
+.dashboard-main {
+  max-width: 1200px;
+  margin: 3rem auto;
+  padding: 0 2rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+}
+
+.dashboard-card {
+  padding: 2.5rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+.primary-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.card-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.primary-card h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.primary-card p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  flex: 1;
+}
+
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.text-accent { color: var(--accent-primary); }
+
+.detail-row {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.detail-row .label {
+  color: var(--text-secondary);
+}
+
+.detail-row .value {
+  font-weight: 500;
+}
+
+.score-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-secondary);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+}
+
+.score-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.text-sm {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-left: 0.25rem;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+}
