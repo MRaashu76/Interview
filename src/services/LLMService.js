@@ -118,9 +118,19 @@ INSTRUCTIONS:
 
   } catch (error) {
     console.error("[Gemini] Connection Error:", error);
+    let errorMsg = "The AI interviewer is temporarily unavailable. Please try again.";
+    
+    if (error.message) {
+      if (error.message.includes("429")) {
+        errorMsg = "API Error: Rate limit exceeded (429). Your API key has run out of quota. Please add a new API key to Vercel.";
+      } else if (error.message.includes("not configured")) {
+        errorMsg = "API Error: VITE_GEMINI_API_KEY is missing! Please add it to your Vercel Environment Variables and redeploy.";
+      }
+    }
+
     return {
       success: false,
-      question: "The AI interviewer is temporarily unavailable. Please try again.",
+      question: errorMsg,
       reasoning: "Fallback triggered due to AI integration failure."
     };
   }
