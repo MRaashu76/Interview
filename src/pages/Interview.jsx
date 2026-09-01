@@ -26,8 +26,9 @@ export default function Interview() {
   // Initialize Component & Services
   useEffect(() => {
     const savedSettings = JSON.parse(localStorage.getItem('interviewSettings') || '{}');
-    if (!savedSettings.apiKey) {
-      alert("Missing API Key!");
+    const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!savedSettings.apiKey && !envKey) {
+      alert("Missing API Key! Please enter your Gemini API Key in the Setup page.");
       navigate('/setup');
       return;
     }

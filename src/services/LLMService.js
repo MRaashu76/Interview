@@ -2,7 +2,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Ensure environment is strictly typed/read
 const getApiKey = () => {
-  const key = import.meta.env.VITE_GEMINI_API_KEY;
+  const savedSettings = JSON.parse(localStorage.getItem('interviewSettings') || '{}');
+  const key = savedSettings.apiKey || import.meta.env.VITE_GEMINI_API_KEY;
   if (!key) {
     console.error("GEMINI_API_KEY is not configured.");
     return null;

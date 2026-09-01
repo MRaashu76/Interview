@@ -6,6 +6,7 @@ import './Setup.css';
 export default function Setup() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    apiKey: '',
     jobRole: 'Software Developer',
     experience: 'Student / Fresher',
     interviewType: 'HR / Behavioral',
@@ -51,7 +52,21 @@ export default function Setup() {
           </div>
 
           <form onSubmit={handleStart} className="setup-form">
-            {/* API Key is now configured via .env */}
+            <div className="input-group">
+              <label className="input-label">Gemini API Key</label>
+              <input 
+                type="password" 
+                name="apiKey" 
+                className="input-field" 
+                placeholder="Enter your Gemini API Key..."
+                value={formData.apiKey} 
+                onChange={handleChange}
+                required={!import.meta.env.VITE_GEMINI_API_KEY}
+              />
+              <span className="text-secondary" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                Your key is only stored locally in your browser.
+              </span>
+            </div>
             <div className="input-group">
               <label className="input-label">Job Role</label>
               <select name="jobRole" className="input-field" value={formData.jobRole} onChange={handleChange}>
